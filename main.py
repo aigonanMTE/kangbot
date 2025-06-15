@@ -36,4 +36,4 @@ async def trade_chat_command(interaction: discord.Interaction , user: discord.Me
     await open_new_chat_command(interaction, user)
 
 # 자신의 봇 토큰으로 교체하세요
-bot.run("MTM4MzQ0Mzk3OTE5ODE0MDU2OQ.GSB7Mv.OXF23JMY_14FZGSqEsmh14_ywvjQUCSY5JSErs")
+bot.run("as")
