@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 import datetime
-import sql.review as review
+from .sql import review, register
 
 
 async def open_new_chat_command(interaction: discord.Interaction, user: discord.Member):
@@ -27,8 +27,8 @@ async def open_new_chat_command(interaction: discord.Interaction, user: discord.
         trade_closed_category_id = 1383493549831618680
         trade_closed_category = guild.get_channel(trade_closed_category_id)
 
-        trade_log_category_id = 1383499310682869894
-        trade_log_category = guild.get_channel(trade_log_category_id)
+        trade_log_channel_id = 1383499310682869894
+        trade_log_channel = guild.get_channel(trade_log_channel_id)
 
         existing_channels = [
             channel for channel in trade_category.text_channels
@@ -40,7 +40,7 @@ async def open_new_chat_command(interaction: discord.Interaction, user: discord.
             return
 
         timestamp = datetime.datetime.now().strftime("%m%d-%H%M")
-        new_channel_name = f"거래-{interaction.user.name}&{user.name}-{timestamp}"
+        new_channel_name = f"거래-{interaction.user.id}&{user.id}-{timestamp}"
 
         overwrites = {
             guild.default_role: discord.PermissionOverwrite(read_messages=False),
@@ -55,7 +55,7 @@ async def open_new_chat_command(interaction: discord.Interaction, user: discord.
             overwrites=overwrites
         )
 
-        await trade_log_category.send(
+        await trade_log_channel.send(
             f"{user.mention} 님과 {interaction.user.mention} 님의 거래 채널이 생성되었습니다: {channel.mention}"
         )
         await interaction.response.send_message(
@@ -87,8 +87,16 @@ async def open_new_chat_command(interaction: discord.Interaction, user: discord.
                 if interaction_button.user in self.reviewed_members:
                     await interaction_button.response.send_message("이미 후기를 작성하셨습니다.", ephemeral=True)
                     return
-
+                
                 target_user = self.member2 if interaction_button.user == self.member1 else self.member1
+
+                if not await register.check_registered(interaction_button.user):
+                    await interaction_button.response.send_message(f"{interaction_button.user.mention}님이 가입되지 않았습니다```/가입````명령어를 입력해 약관에 동의후 진행해주세요")
+                    return
+                if not await register.check_registered(target_user):
+                    await interaction_button.response.send_message(f"{target_user}님이 가입되지 않았습니다```/가입````명령어를 입력해 약관에 동의후 진행해주세요")
+                    return
+
 
                 class ReviewChoiceView(discord.ui.View):
                     def __init__(self, parent_view, reviewer, target_user):
@@ -102,15 +110,20 @@ async def open_new_chat_command(interaction: discord.Interaction, user: discord.
                         if inner_interaction.user != self.reviewer:
                             await inner_interaction.response.send_message("당신의 버튼이 아닙니다.", ephemeral=True)
                             return
-                        await self.parent_view.channel_to_edit.send(
-                            f"📢 {self.reviewer.mention}님이 {self.target_user.mention}님의 후기 작성 완료!"
+                        await review.main(
+                            True,
+                            self.target_user,
+                            self.reviewer,  # 평가자
+                            self.parent_view.channel_to_edit  # 거래 채널
                         )
-                        review.main(True , self.target_user)
                         await review_log_channel.send(
-                            f"📢 후기: {self.reviewer.mention} → {self.target_user.mention} : **좋았어요 👍**\n {self.target_user.mention}의 포인트 : {review.get_point(self.target_user)}"
+                            f"📢 후기: {self.reviewer.mention} → {self.target_user.mention} : **좋았어요 👍**\n {self.target_user.mention}의 포인트 : {await review.get_point(self.target_user)}"
+                        )
+                        await trade_log_channel.send(
+                            f"{self.reviewer.mention} 님이 {self.target_user.mention} 님에게 후기를 남겼습니다"
                         )
                         self.parent_view.reviewed_members.add(self.reviewer)
-                        await inner_interaction.response.send_message("후기를 제출했습니다.", ephemeral=True)
+                        # await inner_interaction.response.send_message("후기를 제출했습니다.", ephemeral=True)
                         self.stop()
 
                     @discord.ui.button(label="싫었어요 👎", style=discord.ButtonStyle.danger)
@@ -121,12 +134,17 @@ async def open_new_chat_command(interaction: discord.Interaction, user: discord.
                         await self.parent_view.channel_to_edit.send(
                             f"📢 {self.reviewer.mention}님이 {self.target_user.mention}님의 후기 작성 완료!"
                         )
-                        review.main(False , self.target_user)
+                        await review.main(
+                            False,
+                            self.target_user,
+                            self.reviewer,  # 평가자
+                            self.parent_view.channel_to_edit  # 거래 채널
+                        )
                         await review_log_channel.send(
-                            f"📢 후기: {self.reviewer.mention} → {self.target_user.mention} : **싫었어요 👎**\n {self.target_user.mention}의 포인트 : {review.get_point(self.target_user)}"
+                            f"📢 후기: {self.reviewer.mention} → {self.target_user.mention} : **싫었어요 👎**\n {self.target_user.mention}의 포인트 : {await review.get_point(self.target_user)}"
                         )
                         self.parent_view.reviewed_members.add(self.reviewer)
-                        await inner_interaction.response.send_message("후기를 제출했습니다.", ephemeral=True)
+                        # await inner_interaction.response.send_message("후기를 제출했습니다.", ephemeral=True)
                         self.stop()
 
                 review_view = ReviewChoiceView(self, interaction_button.user, target_user)
@@ -161,7 +179,7 @@ async def open_new_chat_command(interaction: discord.Interaction, user: discord.
                     }
                     await self.channel_to_edit.edit(overwrites=overwrites)
                     await self.channel_to_edit.edit(category=self.closed_category)
-                    await trade_log_category.send(f"{self.member1.mention} 님과 {self.member2.mention} 님의 거래가 종료되었습니다.")
+                    await trade_log_channel.send(f"{self.member1.mention} 님과 {self.member2.mention} 님의 거래가 종료되었습니다.")
                     self.stop()
 
             @discord.ui.button(label="👎 종료 거부", style=discord.ButtonStyle.danger, emoji="👎")

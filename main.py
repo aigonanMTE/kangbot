@@ -2,6 +2,9 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from commands.send_verification_message import send_verification_message
+import os
+
+discord_token = os.getenv("DISCORD_TOKEN")
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -35,5 +38,12 @@ from commands.open_new_chat import open_new_chat_command
 async def trade_chat_command(interaction: discord.Interaction , user: discord.Member):
     await open_new_chat_command(interaction, user)
 
+
+from commands.register_command import register_command
+@bot.tree.command(name="가입", description="서비스 약관에 동의 및 가입진행")
+async def register_commandd(interaction: discord.Interaction):
+    await register_command(interaction)
+
+
 # 자신의 봇 토큰으로 교체하세요
-bot.run("as")
+bot.run(discord_token)
