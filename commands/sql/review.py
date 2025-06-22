@@ -4,7 +4,7 @@ import os
 import discord
 from discord.ext import commands
 
-
+#asddddddddddddddd
 db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../DB/user.db'))
 
 async def check_in_db(user : discord.Member):
