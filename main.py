@@ -14,6 +14,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 async def on_ready():
     print(f"봇이 로그인되었습니다: {bot.user}")
     try:
+        # persistent view 등록
         synced = await bot.tree.sync()
         print(f"Slash commands synced: {len(synced)}개")
     except Exception as e:

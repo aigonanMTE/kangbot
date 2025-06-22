@@ -2,6 +2,7 @@ import discord
 import sqlite3
 import os
 import discord
+# from tabulate import tabulate
 
 db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../DB/user.db'))
 
@@ -14,6 +15,8 @@ async def check_registered(user:discord.Member):
     result = cursor.fetchone()
 
     conn.close()
+    # print(tabulate(result, headers="firstrow"))
+    print(f"Checking registration for user {user.id}: {'Found' if result else 'Not Found'}")
     
     if result:
         return True  # 유저가 DB에 존재함
