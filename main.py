@@ -51,11 +51,5 @@ from commands.get_point_rank import get_point_rank
 async def get_point_rank_command(interaction: discord.Interaction, user: discord.Member):
     await get_point_rank(interaction, user)
 
-from commands.help import send_help
-@bot.tree.command(name="도움말" , description="도움말 확인")
-@app_commands.describe(도움말="확인할 도움말 입력")
-async def help_command(interaction: discord.Interaction,도움말: str):
-    await send_help(interaction, 도움말)
-
 # 자신의 봇 토큰으로 교체하세요
 bot.run(discord_token)
