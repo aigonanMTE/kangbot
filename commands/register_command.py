@@ -29,7 +29,7 @@ async def register_command(interaction: discord.Interaction):
 
 **6.사용자 권리**
 - 사용자는 언제든지 자신의 데이터를 수정 , 삭제요청 할수 있습니다.
-- 요청 방법 개발자에게 dm 또는 이메일  ||app0911app@naver.com||  (단 수정의 경우 이유가 명확해야함)""",
+- 요청 방법 개발자에게 dm (단 수정의 경우 이유가 명확해야함)""",
         ephemeral=True,
         view=AgreeView()
     )
