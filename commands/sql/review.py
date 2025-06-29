@@ -4,7 +4,7 @@ import os
 from discord.ext import commands
 
 # DB 경로 설정
-db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../DB/user.db'))
+db_path = os.getenv("DATABASE_PATH")
 
 # DB에 유저 존재 여부 확인
 async def check_in_db(user: discord.Member):

@@ -8,7 +8,7 @@ async def open_new_chat_command(interaction: discord.Interaction, user: discord.
     if user == interaction.user:
         await interaction.response.send_message("자기 자신과 거래할 수 없습니다.", ephemeral=True)
         return
-    if interaction.user.get_role(1383322911926124544) is None or user.get_role(1383322911926124544) is None:
+    if interaction.user.get_role(1383322911926124544) is None or user.get_role(1383322911926124544) is None or interaction.user.get_role(1388550455013150772) is None or user.get_role(1388550455013150772) is None:
         await interaction.response.send_message("인증되지 않은 유저입니다.", ephemeral=True)
         return
 
@@ -32,7 +32,7 @@ async def open_new_chat_command(interaction: discord.Interaction, user: discord.
 
         existing_channels = [
             channel for channel in trade_category.text_channels
-            if interaction.user.id in channel.id and user.id in channel.id
+            if str(interaction.user.id) in channel.name and str(user.id) in channel.name
         ]
 
         if existing_channels:
@@ -61,6 +61,12 @@ async def open_new_chat_command(interaction: discord.Interaction, user: discord.
         await interaction.response.send_message(
             f"{user.mention} 님과 {interaction.user.mention} 님의 거래 채널이 생성되었습니다: {channel.mention}", ephemeral=True
         )
+    except discord.Forbidden:
+        if not interaction.response.is_done():
+            await interaction.response.send_message("채널 생성 권한이 없습니다.", ephemeral=True)
+    except Exception as e:
+        if not interaction.response.is_done():
+            await interaction.response.send_message(f"오류 발생: {str(e)}", ephemeral=True)
 
         class TradeEndView(discord.ui.View):
             def __init__(self, channel_to_edit, member1, member2, admin_role, closed_category):
@@ -172,6 +178,8 @@ async def open_new_chat_command(interaction: discord.Interaction, user: discord.
         )
 
     except discord.Forbidden:
-        await interaction.response.send_message("채널 생성 권한이 없습니다.", ephemeral=True)
+        if not interaction.response.is_done():
+            await interaction.response.send_message("채널 생성 권한이 없습니다.", ephemeral=True)
     except Exception as e:
-        await interaction.response.send_message(f"오류 발생: {str(e)}", ephemeral=True)
+        if not interaction.response.is_done():
+            await interaction.response.send_message(f"오류 발생: {str(e)}", ephemeral=True)

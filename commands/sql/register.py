@@ -4,7 +4,7 @@ import os
 import discord
 # from tabulate import tabulate
 
-db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../DB/user.db'))
+db_path = os.getenv("DATABASE_PATH")
 
 async def check_registered(user:discord.Member):
     conn = sqlite3.connect(db_path)
