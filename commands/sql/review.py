@@ -75,7 +75,7 @@ async def add_review_time(user):
         await conn.execute(
             "UPDATE user_reviews SET last_review_time = $1 WHERE discord_id = $2",
             now, user.id
-        )
+        )#asd
         await conn.close()
     except Exception as e:
         print(f"PostgreSQL error: {e}")
