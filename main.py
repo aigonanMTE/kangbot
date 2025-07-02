@@ -3,7 +3,6 @@ from discord import app_commands
 from discord.ext import commands
 from commands.send_verification_message import send_verification_message
 import os
-import check_testmod
 
 discord_token = os.getenv("DISCORD_TOKEN")
 print(f"Discord Token: {discord_token}")

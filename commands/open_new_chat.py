@@ -8,7 +8,10 @@ async def open_new_chat_command(interaction: discord.Interaction, user: discord.
     if user == interaction.user:
         await interaction.response.send_message("자기 자신과 거래할 수 없습니다.", ephemeral=True)
         return
-    if interaction.user.get_role(1383322911926124544) is None or user.get_role(1383322911926124544) is None or interaction.user.get_role(1388550455013150772) is None or user.get_role(1388550455013150772) is None:
+    
+    # 유저 : 1383322911926124544
+    # 디버그 역활 : 1388550455013150772
+    if interaction.user.get_role(1383322911926124544) is None or user.get_role(1383322911926124544) is None:
         await interaction.response.send_message("인증되지 않은 유저입니다.", ephemeral=True)
         return
 
@@ -61,13 +64,8 @@ async def open_new_chat_command(interaction: discord.Interaction, user: discord.
         await interaction.response.send_message(
             f"{user.mention} 님과 {interaction.user.mention} 님의 거래 채널이 생성되었습니다: {channel.mention}", ephemeral=True
         )
-    except discord.Forbidden:
-        if not interaction.response.is_done():
-            await interaction.response.send_message("채널 생성 권한이 없습니다.", ephemeral=True)
-    except Exception as e:
-        if not interaction.response.is_done():
-            await interaction.response.send_message(f"오류 발생: {str(e)}", ephemeral=True)
 
+        # TradeEndView 정의는 파일 상단(글로벌)에 두는 것이 좋습니다!
         class TradeEndView(discord.ui.View):
             def __init__(self, channel_to_edit, member1, member2, admin_role, closed_category):
                 super().__init__(timeout=None)
@@ -170,7 +168,6 @@ async def open_new_chat_command(interaction: discord.Interaction, user: discord.
                 await interaction_button.response.send_message("어떤 후기를 남기시겠습니까?", view=review_view, ephemeral=True)
 
         view = TradeEndView(channel, interaction.user, user, trade_admin_role, trade_closed_category)
-
         await channel.send(
             f"{interaction.user.mention}님과 {user.mention}님의 거래방입니다.\n"
             f"거래가 완료되면 '거래 종료 요청' 버튼을 눌러 투표를 시작하거나, 상대 후기를 남길 수 있습니다.",

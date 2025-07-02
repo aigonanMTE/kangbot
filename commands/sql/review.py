@@ -26,7 +26,7 @@ async def add_user(user: discord.Member):
             return False
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO user_reviews (discord_id, point, scamer) VALUES (?, ?, ?)", (user.id, 350, False))
+        cursor.execute("INSERT INTO user_reviews (discord_id, point, scamer) VALUES (?, ?, ?)", (user.id, 35.0, False))
         conn.commit()
         conn.close()
         return True
@@ -34,7 +34,7 @@ async def add_user(user: discord.Member):
         print(f"SQLite error: {e}")
         return False
 
-# 포인트 조회 (10으로 나눠서 보여줌)
+# 포인트 조회 (소수로 바로 반환)
 async def get_point(user: discord.Member):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -42,20 +42,20 @@ async def get_point(user: discord.Member):
     result = cursor.fetchone()
     conn.close()
     if result:
-        point = result[0] / 10
+        point = result[0]
         print(f"포인트 조회 성공: {user.name} {point}")
         return point
     else:
         return False
 
-# 포인트 변경 (표기값 단위로 받아서 DB에는 10배로 저장)
-async def chainge_point(user: discord.Member, delta: int):
+# 포인트 변경 (소수 단위로 받아서 그대로 처리)
+async def chainge_point(user: discord.Member, delta: float):
     try:
-        get_point_value = await get_point(user)
-        if get_point_value is False:
+        current_point = await get_point(user)
+        if current_point is False:
             print("포인트 조회 실패")
             return False
-        new_point = int((get_point_value + delta) * 10)
+        new_point = current_point + delta
         print(f"새로운 포인트: {new_point}")
 
         conn = sqlite3.connect(db_path)
@@ -68,7 +68,7 @@ async def chainge_point(user: discord.Member, delta: int):
         print(f"SQLite error: {e}")
         return False
 
-# 전체 흐름 제어 함수
+# 전체 흐름 함수에서 변경할 점 (변동값 소수 처리)
 async def main(good: bool, target_user: discord.Member, user: discord.Member, channel: discord.TextChannel):
     if not await check_in_db(target_user):
         print(f"타겟 유저가 db에 없음: {target_user.name}({target_user.id})")
@@ -77,6 +77,6 @@ async def main(good: bool, target_user: discord.Member, user: discord.Member, ch
         print(f"유저가 db에 없음 : {user.name}({user.id})")
         await add_user(user)
 
-    point_change = 5 if good else -5
+    point_change = 0.5 if good else -0.5
     await chainge_point(target_user, point_change)
     await channel.send(f"{user.mention}님이 후기를 제출했습니다.")
