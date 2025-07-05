@@ -2,9 +2,12 @@ import discord
 import sqlite3
 import os
 from discord.ext import commands
+import datetime
+import logging
 
 # DB 경로 설정
 db_path = os.getenv("DATABASE_PATH")
+log_db_path = os.getenv("LOG_DATABASE_PATH")
 
 # DB에 유저 존재 여부 확인
 async def check_in_db(user: discord.Member):
@@ -67,6 +70,33 @@ async def chainge_point(user: discord.Member, delta: float):
     except sqlite3.Error as e:
         print(f"SQLite error: {e}")
         return False
+    
+
+# insert into review_logs (time , target_user, target_user_name, user, user_name, context, Before_point , aefter_point) values (? ,? ,? ,? ,? ,? ,? ,?);
+async def add_log(user: discord.Member, target_user: discord.Member, good: bool, ):
+    try:
+        conn = sqlite3.connect(log_db_path)
+        cursor = conn.cursor()
+        before_point = await get_point(target_user)
+        point_change = 0.5 if good else -0.5
+        after_point = before_point + point_change
+        time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
+        target_user = target_user.id
+        target_user_name = target_user.name
+        user = user.id
+        user_name = user.name
+        context = good
+        cursor.execute(
+            "INSERT INTO review_logs (time, target_user, target_user_name, user, user_name, context, Before_point, After_point) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (time, target_user, target_user_name, user, user_name, context, before_point, after_point)
+        )
+        conn.commit()
+        conn.close()
+    except sqlite3.Error as e:
+        (f"SQLite error: {e}")
+        return False
+
+
 
 # 전체 흐름 함수에서 변경할 점 (변동값 소수 처리)
 async def main(good: bool, target_user: discord.Member, user: discord.Member, channel: discord.TextChannel):
