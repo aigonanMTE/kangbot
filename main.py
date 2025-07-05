@@ -39,6 +39,11 @@ from commands.open_new_chat import open_new_chat_command
 async def trade_chat_command(interaction: discord.Interaction , user: discord.Member):
     await open_new_chat_command(interaction, user)
 
+from commands.send_trade_request import send_trade_request_command
+@bot.tree.command(name="거래요청", description="거래 요청을 보냅니다")
+@app_commands.describe(target_user="거래요청을 보낼 유저 선텍")
+async def send_trade_request_commandd(interaction: discord.Interaction, target_user: discord.Member):
+    await send_trade_request_command(interaction, target_user)
 
 from commands.register_command import register_command
 @bot.tree.command(name="가입", description="서비스 약관에 동의 및 가입진행")

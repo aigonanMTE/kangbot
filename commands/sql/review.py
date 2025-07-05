@@ -106,7 +106,7 @@ async def main(good: bool, target_user: discord.Member, user: discord.Member, ch
     if not await check_in_db(user):
         print(f"유저가 db에 없음 : {user.name}({user.id})")
         await add_user(user)
-
     point_change = 0.5 if good else -0.5
+    await add_log(user, target_user, good)
     await chainge_point(target_user, point_change)
     await channel.send(f"{user.mention}님이 후기를 제출했습니다.")
