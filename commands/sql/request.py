@@ -19,6 +19,7 @@ async def add_request(user: discord.Member, target_user: discord.Member):
         cursor.execute("insert into requests (user, user_id , target_user, target_user_id, time, status) values (?,?,?,?,?,?);", (user.name, user_id, target_user.name, target_user_id, time, "waiting"))
         conn.commit()
         conn.close()
+        return True
     except sqlite3.Error as e:
         logging.error(f"거래 요청 추가중 오류 발생\nSQLite error: {e}")
         return False

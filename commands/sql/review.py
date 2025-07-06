@@ -19,7 +19,7 @@ async def check_in_db(user: discord.Member):
         conn.close()
         return result is not None
     except sqlite3.Error as e:
-        print(f"SQLite error: {e}")
+        logging.error(f"review.py의 check_in_db함수에서 오류 발생\n SQLite error: {e}")
         return False
 
 # 유저 추가
@@ -34,7 +34,7 @@ async def add_user(user: discord.Member):
         conn.close()
         return True
     except sqlite3.Error as e:
-        print(f"SQLite error: {e}")
+        logging.error(f"review.py의 add_user함수에서 오류 발생\nSQLite error: {e}")
         return False
 
 # 포인트 조회 (소수로 바로 반환)
@@ -68,7 +68,7 @@ async def chainge_point(user: discord.Member, delta: float):
         conn.close()
         return True
     except sqlite3.Error as e:
-        print(f"SQLite error: {e}")
+        logging.error(f"review.py의 chainge_point함수에서 오류 발생\nSQLite error: {e}")
         return False
     
 
@@ -93,10 +93,37 @@ async def add_log(user: discord.Member, target_user: discord.Member, good: bool,
         conn.commit()
         conn.close()
     except sqlite3.Error as e:
-        (f"SQLite error: {e}")
+        logging.error(f"review.py의 add_log함수에서 오류 발생\nSQLite error: {e}")
         return False
+    
+async def loging_last_review_time(user: discord.Member):
+    try:
+        time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute("update user_reviews set last_review_time=? where discord_id=?", (time,user.id))
+        cursor.commit()
+        conn.close()
+    except sqlite3.Error as e:
+        logging.error(f"review.py의 loging_last_review_time함수에서 오류 발생\nSQLite error: {e}")
+        return False
+        
 
-
+async def get_last_review_time(user: discord.Member):
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT last_review_time FROM user_reviews WHERE discord_id = ?", (user.id,))
+        result = cursor.fetchone()
+        conn.close()
+        if result:
+            print(f"마지막 리뷰 시간 조회 성공: {user.name} {result[0]}")
+            return result[0]
+        else:
+            return None
+    except sqlite3.Error as e:
+        logging.error(f"review.py의 get_last_review_time함수에서 오류 발생\nSQLite error: {e}")
+        return None
 
 # 전체 흐름 함수에서 변경할 점 (변동값 소수 처리)
 async def main(good: bool, target_user: discord.Member, user: discord.Member, channel: discord.TextChannel):
@@ -109,4 +136,5 @@ async def main(good: bool, target_user: discord.Member, user: discord.Member, ch
     point_change = 0.5 if good else -0.5
     await add_log(user, target_user, good)
     await chainge_point(target_user, point_change)
+    await loging_last_review_time(user)
     await channel.send(f"{user.mention}님이 후기를 제출했습니다.")
