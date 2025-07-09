@@ -33,6 +33,11 @@ async def ping(interaction: discord.Interaction):
 async def verification_command(interaction: discord.Interaction):
     await send_verification_message(interaction)
 
+from commands.check_trade_requset import check_trade_requset
+@bot.tree.command(name="거래확인", description="거래 요청을 확인합니다")
+async def check_trade_request_command(interaction: discord.Interaction):
+    await check_trade_requset(interaction)
+
 from commands.open_new_chat import open_new_chat_command
 @bot.tree.command(name="거래체팅", description="상대와의 거래 체팅을 엽니다")
 @app_commands.describe(user="거래할 유저를 선택하세요")

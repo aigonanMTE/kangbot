@@ -31,7 +31,7 @@ async def get_requests(user: discord.Member):
         cursor = conn.cursor()
 
         user_id1 = str(user.id)
-        cursor.execute("select * from requests where target_user_id = ? and status = 'waiting';", (user_id1))
+        cursor.execute("select * from requests where target_user_id = ? and status = 'waiting';", (user_id1,))
         requests = cursor.fetchall()
         conn.close()
 
