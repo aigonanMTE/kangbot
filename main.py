@@ -32,11 +32,16 @@ async def ping(interaction: discord.Interaction):
 @bot.tree.command(name="인증", description="인증 하기")
 async def verification_command(interaction: discord.Interaction):
     await send_verification_message(interaction)
-
+from commands.check_my_requests import check_my_requests
 from commands.check_trade_requset import check_trade_requset
 @bot.tree.command(name="거래확인", description="거래 요청을 확인합니다")
-async def check_trade_request_command(interaction: discord.Interaction):
-    await check_trade_requset(interaction)
+@app_commands.describe(my_requests="내가 보낸 거래 요청을 확인합니다 확인 하려면 아무거나 입력하세요")
+async def check_trade_request_command(interaction: discord.Interaction, my_requests: str = None):
+    if not my_requests:  # 값이 없거나 빈 문자열일 때
+        #자신이 보낸 거래요청 확인
+        await check_trade_requset(interaction)
+    else:
+        await check_my_requests(interaction)
 
 from commands.open_new_chat import open_new_chat_command
 @bot.tree.command(name="거래체팅", description="상대와의 거래 체팅을 엽니다")

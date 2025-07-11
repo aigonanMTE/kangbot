@@ -24,6 +24,35 @@ async def add_request(user: discord.Member, target_user: discord.Member):
         logging.error(f"거래 요청 추가중 오류 발생\nSQLite error: {e}")
         return False
     
+async def get_my_requests(user: discord.Member):
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+
+        user_id1 = str(user.id)
+        cursor.execute("select * from requests where user_id = ? and status = 'waiting';", (user_id1,))
+        requests = cursor.fetchall()
+        conn.close()
+
+        data = [
+            {
+                "request_id": request[0],
+                "user": request[1],
+                "user_id": request[2],
+                "target_user": request[3],
+                "target_user_id": request[4],
+                "time": request[5],
+                "status": request[6]
+            } for request in requests
+        ]
+        logging.info(f"거래 요청 조회: {user.name} - 요청 수: {len(data)}")
+        if not requests:
+            return None
+
+        return data
+    except sqlite3.Error as e:
+        logging.error(f"거래 요청 조회중 오류 발생\nSQLite error: {e}")
+        return None
 
 async def get_requests(user: discord.Member):
     try:
