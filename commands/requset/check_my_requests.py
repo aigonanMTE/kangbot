@@ -1,6 +1,6 @@
 import discord
 import math
-from .sql import request
+from commands.sql import request
 
 class MyRequestView(discord.ui.View):
     def __init__(self, requests, page=1):
@@ -64,7 +64,7 @@ async def check_my_requests(interaction: discord.Interaction):
     requests = await request.get_my_requests(user)
     if not requests:
         await interaction.response.send_message(
-            "```ansi\n[2;31m[1;31m내가 보낸 거래 요청이 없습니다.[0m[2;31m[0m\n```",
+            "```ansi\n[2;31m[1;31m보낸 거래 요청이 없습니다.[0m[2;31m[0m\n```",
             ephemeral=True)
         return
 

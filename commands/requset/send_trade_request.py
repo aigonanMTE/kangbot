@@ -1,7 +1,7 @@
 import discord
-from .sql import register
-from .sql import review
-from .sql import request
+from commands.sql import register
+from commands.sql import review
+from commands.sql import request
 
 async def send_trade_request_command(interaction: discord.Interaction, target_user: discord.Member):
     user = interaction.user
@@ -22,6 +22,10 @@ async def send_trade_request_command(interaction: discord.Interaction, target_us
         await interaction.response.send_message("```ansi\n[2;31m[1;31m자기 자신에게 거래 요청을 보낼 수 없습니다[0m[2;31m[0m\n```", ephemeral=True)
         return
     
+    if await request.dobble_request_check(user, target_user):
+        await interaction.response.send_message("```ansi\n[2;31m[1;31m이미 해당 유저에게 거래 요청을 보냈습니다.[0m[2;31m[0m\n```", ephemeral=True)
+        return
+
     if not await request.add_request(user, target_user):
         await interaction.response.send_message("```ansi\n[2;31m[1;31m거래 요청을 보내는 중 오류가 발생했습니다. 나중에 다시 시도해주세요.[0m[2;31m[0m\n```", ephemeral=True)
         return

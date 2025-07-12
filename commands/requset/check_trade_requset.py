@@ -1,5 +1,5 @@
-from .sql import request
-from .sql import register
+from commands.sql import request
+from commands.sql import register
 import discord
 import math
 

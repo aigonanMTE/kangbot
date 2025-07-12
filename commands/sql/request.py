@@ -84,13 +84,22 @@ async def get_requests(user: discord.Member):
         logging.error(f"거래 요청 조회중 오류 발생\nSQLite error: {e}")
         return None
 
-async def accept_request(request_id: int):
+async def accept_request(request_id: int, user: discord.Member):
     try:
         conn = sqlite3.connect(db_path)
+        user_id = str(user.id)
         cursor = conn.cursor()
+
+        cursor.execute("SELECT * FROM requests WHERE request_id = ? AND status = 'waiting' AND target_user_id=?;", (request_id,user_id))
+        request = cursor.fetchone()
+        if not request:
+            logging.info(f"거래 요청 수락 실패: 요청 ID {request_id} 또는 사용자 ID {user_id}가 잘못되었습니다.")
+            conn.close()
+            return "잘못된 값"
+        
         cursor.execute(
-            "UPDATE requests SET status = 'accepted' WHERE request_id = ? AND status = 'waiting';",
-            (request_id,)
+            "UPDATE requests SET status = 'accepted' WHERE request_id = ? AND status = 'waiting' AND target_user_id =?;",
+            (request_id,user_id)
         )
         conn.commit()
         conn.close()
@@ -114,6 +123,45 @@ async def refusal_request(request_id: int):
         return True
     except sqlite3.Error as e:
         logging.error(f"거래 요청 거절 중 오류 발생\nSQLite error: {e}")
+        return False
+    
+async def get_user(request_id: int):
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT user_id FROM requests WHERE request_id = ?;", (request_id,))
+        target_user_id = cursor.fetchone()
+        conn.close()
+
+        if target_user_id:
+            return int(target_user_id[0])
+        else:
+            logging.info(f"거래 요청 ID {request_id}에 대한 대상 사용자 ID를 찾을 수 없습니다.")
+            return None
+    except sqlite3.Error as e:
+        logging.error(f"대상 사용자 조회 중 오류 발생\nSQLite error: {e}")
+        return None
+    
+async def dobble_request_check(user: discord.Member, target_user: discord.Member):
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+
+        user_id = str(user.id)
+        target_user_id = str(target_user.id)
+
+        cursor.execute("SELECT * FROM requests WHERE user_id = ? AND target_user_id = ? AND status = 'waiting';", (user_id, target_user_id))
+        request = cursor.fetchone()
+        conn.close()
+
+        if request:
+            logging.info(f"거래 요청 중복 확인: {user.name} -> {target_user.name} - 중복 요청이 존재합니다.")
+            return True
+        else:
+            logging.info(f"거래 요청 중복 확인: {user.name} -> {target_user.name} - 중복 요청이 없습니다.")
+            return False
+    except sqlite3.Error as e:
+        logging.error(f"거래 요청 중복 확인 중 오류 발생\nSQLite error: {e}")
         return False
 
 async def cancel_request(request_id: int):
