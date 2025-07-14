@@ -9,6 +9,77 @@ import logging
 db_path = os.getenv("DATABASE_PATH")
 log_db_path = os.getenv("LOG_DATABASE_PATH")
 
+async def add_other_problem(user: discord.Member):
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+
+        user_id = str(user.id)
+        
+        cursor.execute("select other_problem from user_reviews where discord_id=?;", (user_id,))
+        result = cursor.fetchone()
+
+        # 기존 값이 None이면 0으로, 아니면 1 더하기
+        if result is None or result[0] is None:
+            new_value = 1
+        else:
+            new_value = int(result[0]) + 1
+
+        cursor.execute("update user_reviews set other_problem=? where discord_id=?;", (new_value, user_id))
+        conn.commit()
+        conn.close()
+        return True
+    except sqlite3.Error as e:
+        logging.error(f"기타 문제 추가 중 오류 발생\nSQLite error: {e}")
+        return False
+
+async def add_value_problem(user: discord.Member):
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+
+        user_id = str(user.id)
+        
+        cursor.execute("select value_problem from user_reviews where discord_id=?;", (user_id,))
+        result = cursor.fetchone()
+
+        # 기존 값이 None이면 0으로, 아니면 1 더하기
+        if result is None or result[0] is None:
+            new_value = 1
+        else:
+            new_value = int(result[0]) + 1
+
+        cursor.execute("update user_reviews set value_problem=? where discord_id=?;", (new_value, user_id))
+        conn.commit()
+        conn.close()
+        return True
+    except sqlite3.Error as e:
+        logging.error(f"가격 조율 문제 추가 중 오류 발생\nSQLite error: {e}")
+        return False
+
+async def add_date_problem(user: discord.Member):
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+
+        user_id = str(user.id)
+        
+        cursor.execute("select date_problem from user_reviews where discord_id=?;", (user_id,))
+        result = cursor.fetchone()
+        # 기존 값이 None이면 0으로, 아니면 1 더하기
+        if result is None or result[0] is None:
+            new_value = 1
+        else:
+            new_value = int(result[0]) + 1
+
+        cursor.execute("update user_reviews set date_problem=? where discord_id=?;", (new_value, user_id))
+        conn.commit()
+        conn.close()
+        return True
+    except sqlite3.Error as e:
+        logging.error(f"날짜 문제 추가 중 오류 발생\nSQLite error: {e}")
+        return False
+
 # DB에 유저 존재 여부 확인
 async def check_in_db(user: discord.Member):
     try:

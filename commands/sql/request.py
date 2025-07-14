@@ -6,7 +6,6 @@ import logging
 
 db_path = os.getenv("TRADE_DATABASE_PATH")
 
-
 async def add_request(user: discord.Member, target_user: discord.Member):
     try:
         conn = sqlite3.connect(db_path)
