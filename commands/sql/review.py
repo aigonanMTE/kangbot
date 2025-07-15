@@ -144,7 +144,7 @@ async def chainge_point(user: discord.Member, delta: float):
     
 
 # insert into review_logs (time , target_user, target_user_name, user, user_name, context, Before_point , aefter_point) values (? ,? ,? ,? ,? ,? ,? ,?);
-async def add_log(user: discord.Member, target_user: discord.Member, good: bool, ):
+async def add_log(user: discord.Member, target_user: discord.Member, good: bool):
     try:
         conn = sqlite3.connect(log_db_path)
         cursor = conn.cursor()
@@ -152,14 +152,14 @@ async def add_log(user: discord.Member, target_user: discord.Member, good: bool,
         point_change = 0.5 if good else -0.5
         after_point = before_point + point_change
         time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
-        target_user = target_user.id
+        target_user_id = target_user.id
         target_user_name = target_user.name
-        user = user.id
+        user_id = user.id
         user_name = user.name
         context = good
         cursor.execute(
             "INSERT INTO review_logs (time, target_user, target_user_name, user, user_name, context, Before_point, After_point) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (time, target_user, target_user_name, user, user_name, context, before_point, after_point)
+            (time, target_user_id, target_user_name, user_id, user_name, context, before_point, after_point)
         )
         conn.commit()
         conn.close()
@@ -173,7 +173,7 @@ async def loging_last_review_time(user: discord.Member):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         cursor.execute("update user_reviews set last_review_time=? where discord_id=?", (time,user.id))
-        cursor.commit()
+        conn.commit()
         conn.close()
     except sqlite3.Error as e:
         logging.error(f"review.py의 loging_last_review_time함수에서 오류 발생\nSQLite error: {e}")

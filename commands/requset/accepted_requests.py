@@ -63,9 +63,9 @@ class TradeEndView(discord.ui.View):
             await interaction_button.response.send_message("거래 당사자만 거래 종료를 요청할 수 있습니다.", ephemeral=True)
             return
 
-        if len(self.reviewed_members) != 2:
-            await interaction_button.response.send_message("거래 종료를 위해서는 양쪽 모두 후기를 남겨야 합니다.", ephemeral=True)
-            return
+        # if len(self.reviewed_members) != 2:
+        #     await interaction_button.response.send_message("거래 종료를 위해서는 양쪽 모두 후기를 남겨야 합니다.", ephemeral=True)
+        #     return
 
         await self.channel_to_edit.send("거래가 종료되었습니다. 거래방을 종료 카테고리로 이동합니다.")
         overwrites = {
@@ -181,11 +181,76 @@ class TradeEndView(discord.ui.View):
             )
         )
 
+    @discord.ui.button(label="후기 남기기", style=discord.ButtonStyle.success)
+    async def review_trade(self, interaction_button: discord.Interaction, button: discord.ui.Button):
+
+        target_user = self.member1 if interaction_button.user == self.member2 else self.member2
+
+        if interaction_button.user not in [self.member1, self.member2]:
+            await interaction_button.response.send_message("거래 당사자만 후기를 남길 수 있습니다.", ephemeral=True)
+            return
+
+        if interaction_button.user in self.reviewed_members:
+            await interaction_button.response.send_message("이미 후기를 남겼습니다.", ephemeral=True)
+            return
+        
+        class ReviewView(discord.ui.View):
+            def __init__(self, target_user:discord.member, interaction_user:discord.member, interaction: discord.Interaction, channel:discord.TextChannel, reviewed_members):
+                super().__init__(timeout=60)
+                self.target_user = target_user
+                self.interaction_user = interaction_user
+                self.channel = channel
+                guild = interaction.guild
+                review_log_channel_id = 1383496377530712288
+                review_log_channel = guild.get_channel(review_log_channel_id)
+                self.review_log_channel = review_log_channel
+                self.reviewed_members = reviewed_members
+
+            @discord.ui.button(label="👍", style=discord.ButtonStyle.green)
+            async def good_review(self, interaction: discord.Interaction, button: discord.ui.Button):
+                await review.main(
+                            True,
+                            self.target_user,
+                            self.interaction_user,  # 평가자
+                            self.channel  # 거래 채널
+                        )
+                await interaction.response.send_message("좋은 후기를 남겼습니다.", ephemeral=True)
+                await self.review_log_channel.send(
+                            f"📢 후기: {self.interaction_user.mention} → {self.target_user.mention} : **좋았어요 👎**\n {self.target_user.mention}의 포인트 : {await review.get_point(self.target_user)}"
+                        )
+                self.reviewed_members.add(interaction_button.user)
+                self.stop()
+
+            @discord.ui.button(label="👎", style=discord.ButtonStyle.red)
+            async def bad_review(self, interaction: discord.Interaction, button: discord.ui.Button):
+                await review.main(
+                            True,
+                            self.target_user,
+                            self.interaction_user,  # 평가자
+                            self.channel  # 거래 채널
+                        )
+                await interaction.response.send_message("나쁜 후기를 남겼습니다.", ephemeral=True)
+                await self.review_log_channel.send(
+                            f"📢 후기: {self.interaction_user.mention} → {self.target_user.mention} : **싫었어요 👎**\n {self.target_user.mention}의 포인트 : {await review.get_point(self.target_user)}"
+                        )
+                self.reviewed_members.add(interaction_button.user)
+                self.stop()
+
+        await interaction_button.response.send_message(
+        f"{target_user.mention}님에 대한 후기를 남겨주세요",
+        view=ReviewView(
+            target_user,
+            interaction_button.user,
+            interaction_button,
+            self.channel_to_edit,
+            self.reviewed_members   # 추가!
+        ),
+            ephemeral=True
+        )
+        
+
 async def create_new_trade_chat(interaction: discord.Interaction, target_user: discord.Member, request_id: int):
     guild = interaction.guild
-
-    review_log_channel_id = 1383496377530712288
-    review_log_channel = guild.get_channel(review_log_channel_id)
 
     trade_admin_role_id = 1383489321411285032
     trade_admin_role = guild.get_role(trade_admin_role_id)
