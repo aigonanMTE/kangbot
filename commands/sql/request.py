@@ -108,29 +108,28 @@ async def accept_request(request_id: int, user: discord.Member):
         logging.error(f"거래 요청 수락 중 오류 발생\nSQLite error: {e}")
         return False
     
-async def refusal_request(request_id: int, user: discord.Member):
+async def refusal_request(request_id: int, user_id: int):
     try:
         conn = sqlite3.connect(db_path)
-        user_id = str(user.id)
         cursor = conn.cursor()
 
-        cursor.execute("SELECT * FROM requests WHERE request_id = ? AND status = 'waiting' AND target_user_id=?;", (request_id,user_id))
+        cursor.execute("SELECT * FROM requests WHERE request_id = ? AND status = 'waiting' AND target_user_id=?;", (request_id, str(user_id)))
         request = cursor.fetchone()
         if not request:
-            logging.info(f"거래 요청 수락 실패: 요청 ID {request_id} 또는 사용자 ID {user_id}가 잘못되었습니다.")
+            logging.info(f"거래 요청 거절 실패: 요청 ID {request_id} 또는 사용자 ID {user_id}가 잘못되었습니다.")
             conn.close()
             return False
         
         cursor.execute(
             "UPDATE requests SET status = 'refusal' WHERE request_id = ? AND status = 'waiting' AND target_user_id =?;",
-            (request_id,user_id)
+            (request_id, str(user_id))
         )
         conn.commit()
         conn.close()
-        logging.info(f"거래 요청 수락 (요청 ID: {request_id})")
+        logging.info(f"거래 요청 거절 (요청 ID: {request_id})")
         return True
     except sqlite3.Error as e:
-        logging.error(f"거래 요청 수락 중 오류 발생\nSQLite error: {e}")
+        logging.error(f"거래 요청 거절 중 오류 발생\nSQLite error: {e}")
         return False
     
 async def get_user(request_id: int):
@@ -171,30 +170,13 @@ async def dobble_request_check(user: discord.Member, target_user: discord.Member
     except sqlite3.Error as e:
         logging.error(f"거래 요청 중복 확인 중 오류 발생\nSQLite error: {e}")
         return False
-
-async def cancel_request(request_id: int):
-    try:
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        cursor.execute(
-            "UPDATE requests SET status = 'cancelled' WHERE request_id = ? AND status = 'waiting';",
-            (request_id,)
-        )
-        conn.commit()
-        conn.close()
-        logging.info(f"거래 요청 취소 (요청 ID: {request_id})")
-        return True
-    except sqlite3.Error as e:
-        logging.error(f"거래 요청 취소 중 오류 발생\nSQLite error: {e}")
-        return False
     
-async def cancel_request(request_id: int, user: discord.Member):
+async def cancel_request(request_id: int, user_id: int):
     try:
         conn = sqlite3.connect(db_path)
-        user_id = str(user.id)
         cursor = conn.cursor()
 
-        cursor.execute("SELECT * FROM requests WHERE request_id = ? AND status = 'waiting' AND user_id=?;", (request_id,user_id))
+        cursor.execute("SELECT * FROM requests WHERE request_id = ? AND status = 'waiting' AND user_id=?;", (request_id, str(user_id)))
         request = cursor.fetchone()
         if not request:
             logging.info(f"거래 요청 수락 실패: 요청 ID {request_id} 또는 사용자 ID {user_id}가 잘못되었습니다.")
@@ -203,7 +185,7 @@ async def cancel_request(request_id: int, user: discord.Member):
         
         cursor.execute(
             "UPDATE requests SET status = 'cancel' WHERE request_id = ? AND status = 'waiting' AND user_id =?;",
-            (request_id,user_id)
+            (request_id, str(user_id))
         )
         conn.commit()
         conn.close()
@@ -228,4 +210,3 @@ async def end_request(request_id: int):
     except sqlite3.Error as e:
         logging.error(f"거래 요청 종료 중 오류 발생\nSQLite error: {e}")
         return
-

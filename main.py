@@ -55,6 +55,12 @@ from commands.requset.accepted_requests import accepted_requests_command
 async def accepted_requests_commandd(interaction: discord.Interaction, request_id: int):
     await accepted_requests_command(interaction, request_id)
 
+from commands.requset.cancel_request import cancel_request
+@bot.tree.command(name="거래취소", description="거래 요청을 취소합니다")
+@app_commands.describe(request_id="취소할 거래요청의 아이디값을 입력하세요")
+async def accepted_requests_commandd(interaction: discord.Interaction, request_id: int):
+    await cancel_request(interaction, request_id)
+
 
 # from commands.open_new_chat import open_new_chat_command
 # @bot.tree.command(name="거래체팅", description="상대와의 거래 체팅을 엽니다")

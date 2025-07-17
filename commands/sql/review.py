@@ -161,6 +161,7 @@ async def add_log(user: discord.Member, target_user: discord.Member, good: bool)
             "INSERT INTO review_logs (time, target_user, target_user_name, user, user_name, context, Before_point, After_point) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (time, target_user_id, target_user_name, user_id, user_name, context, before_point, after_point)
         )
+        print(f"리뷰 로그 추가 성공: {user.name} -> {target_user.name} | 포인트 변경: {before_point} -> {after_point}")
         conn.commit()
         conn.close()
     except sqlite3.Error as e:

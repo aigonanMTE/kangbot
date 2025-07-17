@@ -18,7 +18,7 @@ async def refusal_req(interaction: discord.Interaction, request_id: int):
     
     if not await request.refusal_request(request_id, user.id):
         await interaction.response.send_message(
-            "```ansi\n[2;31m[1;31m당신의 거래가 아니거나 오류가 발생하였습니다[0m[2;31m[0m\n```", ephemeral=True
+            "```ansi\n[2;31m[1;31m당신의 거래가 아니거나 오류가 발생하였습니다\n거래요청은 /거래확인 명령어로 확인할수 있습니다[0m[2;31m[0m\n```", ephemeral=True
         )
         return
     else:
