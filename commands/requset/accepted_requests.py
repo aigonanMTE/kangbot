@@ -33,14 +33,9 @@ async def accepted_requests_command(interaction: discord.Interaction, request_id
 
     # 거래요청 수락
     answer = await request.accept_request(request_id, user)
-    if answer == "잘못된 값":
+    if answer is False:
         await interaction.response.send_message(
-            "```ansi\n[2;31m[1;31m거래 아이디가 잘못되었거나 자신의 거래가 아닙니다[0m[2;31m[0m\n```", ephemeral=True
-        )
-        return
-    elif answer is False:
-        await interaction.response.send_message(
-            "```ansi\n[2;31m[1;31m거래 요청 수락 중 오류가 발생했습니다. 나중에 다시 시도해주세요.[0m[2;31m[0m\n```", ephemeral=True
+            "```ansi\n[2;31m[1;31m당신의 거래가 아니거나 오류가 발생하였습니다\n거래요청은 /거래확인 명령어로 확인할수 있습니다[0m[2;31m[0m\n```", ephemeral=True
         )
         return
 
@@ -48,7 +43,7 @@ async def accepted_requests_command(interaction: discord.Interaction, request_id
     await create_new_trade_chat(interaction, target_user, request_id)
 
 class TradeEndView(discord.ui.View):
-    def __init__(self, channel_to_edit, member1, member2, admin_role, closed_category):
+    def __init__(self, channel_to_edit, member1, member2, admin_role, closed_category, request_id):
         super().__init__(timeout=None)
         self.channel_to_edit = channel_to_edit
         self.member1 = member1
@@ -56,6 +51,7 @@ class TradeEndView(discord.ui.View):
         self.admin_role = admin_role
         self.closed_category = closed_category
         self.reviewed_members = set()
+        self.request_id = request_id
 
     @discord.ui.button(label="거래 종료", style=discord.ButtonStyle.danger)
     async def end_trade(self, interaction_button: discord.Interaction, button: discord.ui.Button):
@@ -82,6 +78,7 @@ class TradeEndView(discord.ui.View):
             f"{self.member1.mention} 님과 {self.member2.mention} 님의 거래가 종료되었습니다."
         )
         await interaction_button.response.send_message("거래가 종료되었습니다.", ephemeral=True)
+        await request.end_request(request_id=self.request_id)
         self.stop()
 
     @discord.ui.button(label="거래 미진행 종료", style=discord.ButtonStyle.red)
@@ -92,13 +89,14 @@ class TradeEndView(discord.ui.View):
 
         # 내부 View 클래스 정의
         class NotTradeEndView(discord.ui.View):
-            def __init__(self, channel_to_edit, member1, member2, admin_role, closed_category):
+            def __init__(self, channel_to_edit, member1, member2, admin_role, closed_category , request_id):
                 super().__init__(timeout=30)
                 self.channel_to_edit = channel_to_edit
                 self.member1 = member1
                 self.member2 = member2
                 self.admin_role = admin_role
                 self.closed_category = closed_category
+                self.request_id = request_id
 
             @discord.ui.button(label="일정 조율 문제", style=discord.ButtonStyle.primary)
             async def end_trade_schedule(self, interaction_button: discord.Interaction, button: discord.ui.Button):
@@ -121,6 +119,7 @@ class TradeEndView(discord.ui.View):
                 await trade_log_channel.send(
                     f"{self.member1.mention} 님과 {self.member2.mention} 님의 거래가 미진행으로 종료되었습니다."
                 )
+                await request.end_request(request_id=self.request_id)
                 self.stop()
 
             @discord.ui.button(label="상대가 터무니 없는 가격 제시", style=discord.ButtonStyle.primary)
@@ -144,6 +143,7 @@ class TradeEndView(discord.ui.View):
                 await trade_log_channel.send(
                     f"{self.member1.mention} 님과 {self.member2.mention} 님의 거래가 미진행으로 종료되었습니다."
                 )
+                await request.end_request(request_id=self.request_id)
                 self.stop()
 
             @discord.ui.button(label="기타", style=discord.ButtonStyle.primary)
@@ -167,6 +167,7 @@ class TradeEndView(discord.ui.View):
                 await trade_log_channel.send(
                     f"{self.member1.mention} 님과 {self.member2.mention} 님의 거래가 미진행으로 종료되었습니다."
                 )
+                await request.end_request(request_id=self.request_id)
                 self.stop()
 
         await interaction_button.response.send_message(
@@ -177,7 +178,8 @@ class TradeEndView(discord.ui.View):
                 self.member1,
                 self.member2,
                 self.admin_role,
-                self.closed_category
+                self.closed_category,
+                self.request_id
             )
         )
 
@@ -289,7 +291,7 @@ async def create_new_trade_chat(interaction: discord.Interaction, target_user: d
         category=trade_category,
     )
 
-    view = TradeEndView(channel, interaction.user, target_user, trade_admin_role, trade_closed_category)
+    view = TradeEndView(channel, interaction.user, target_user, trade_admin_role, trade_closed_category, request_id)
 
     await trade_log_channel.send(
         f"{target_user.mention} 님과 {interaction.user.mention} 님의 거래 채널이 생성되었습니다: {channel.mention}"

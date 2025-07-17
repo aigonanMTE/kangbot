@@ -43,6 +43,12 @@ async def check_trade_request_command(interaction: discord.Interaction, my_reque
     else:
         await check_my_requests(interaction)
 
+from commands.requset.refusal_request import refusal_req
+@bot.tree.command(name="거래거절", description="거래 요청을 거절합니다")
+@app_commands.describe(request_id="거절할 거래 요청의 아이디값을 입력하세요")
+async def refusal_request_command(interaction: discord.Interaction, request_id: int):
+    await refusal_req(interaction, request_id)
+
 from commands.requset.accepted_requests import accepted_requests_command
 @bot.tree.command(name="거래수락", description="거래 요청을 수락합니다")
 @app_commands.describe(request_id="수락할 거래요청의 아이디값을 입력하세요")
