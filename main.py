@@ -5,7 +5,7 @@ from commands.send_verification_message import send_verification_message
 import os
 
 discord_token = os.getenv("DISCORD_TOKEN")
-# print(f"Discord Token: {discord_token}")
+print(f"Discord Token: {discord_token}")
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -32,6 +32,12 @@ async def ping(interaction: discord.Interaction):
 @bot.tree.command(name="인증", description="인증 하기")
 async def verification_command(interaction: discord.Interaction):
     await send_verification_message(interaction)
+
+from commands.roblox_auth.roblox_auth_command import roblox_auth_command
+@bot.tree.command(name="로블록스 연동", description="로블록스 계정과 디스코드 계정을 연동합니다")
+@app_commands.describe(roblox_username="연동할 로블록스 유저네임을 입력하세요")
+async def roblox_link_command(roblox_username:str, interaction: discord.Interaction):
+    await roblox_auth_command(roblox_username,interaction)
 
 from commands.requset.check_my_requests import check_my_requests
 from commands.requset.check_trade_requset import check_trade_requset
