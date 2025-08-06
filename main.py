@@ -34,9 +34,9 @@ async def verification_command(interaction: discord.Interaction):
     await send_verification_message(interaction)
 
 from commands.roblox_auth.roblox_auth_command import roblox_auth_command
-@bot.tree.command(name="로블록스 연동", description="로블록스 계정과 디스코드 계정을 연동합니다")
+@bot.tree.command(name="로블록스_연동", description="로블록스 계정과 디스코드 계정을 연동합니다")
 @app_commands.describe(roblox_username="연동할 로블록스 유저네임을 입력하세요")
-async def roblox_link_command(roblox_username:str, interaction: discord.Interaction):
+async def roblox_link_command(interaction: discord.Interaction, roblox_username:str):
     await roblox_auth_command(roblox_username,interaction)
 
 from commands.requset.check_my_requests import check_my_requests
@@ -92,4 +92,4 @@ async def get_point_rank_command(interaction: discord.Interaction, user: discord
     await get_point_rank(interaction, user)
 
 # 자신의 봇 토큰으로 교체하세요
-bot.run(discord_token)
+bot.run("MTM4NzY3OTM1OTk1OTMwMjE3NQ.GgY91M.6Ouplw0F8QFMp-Vj2GU2bIOAfA1ohFcrn8GURg")
