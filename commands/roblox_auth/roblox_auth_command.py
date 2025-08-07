@@ -5,6 +5,7 @@ import aiohttp
 import random
 import asyncio
 from roblox import Client
+from commands.sql import roblox_auth
 
 global client
 client = Client()
@@ -51,6 +52,8 @@ async def check_user_profile_description(user_id: int, expected_description: str
             data = await resp.json()
             description = data.get("description", "")
             return expected_description in description
+        
+
 
 async def roblox_auth_command(roblox_name: str, interaction: discord.Interaction):
     chnanel = interaction.channel
@@ -131,8 +134,27 @@ async def roblox_auth_command(roblox_name: str, interaction: discord.Interaction
                 )
                 return
             await interaction_button.followup.send(
-                f"사용자의 프로필 설명이 {message}와 일치합니다.\n인증이 완료되었습니다!", ephemeral=True
+                f"사용자의 프로필 설명이 {message}와 일치합니다.\n인증이 완료되었습니다!\n📜db에 사용자의 정보를 기록중입니다...", ephemeral=True
             )
+            # db에 사용자 정보 기록
+            if await roblox_auth.get_user_2_roblox_id(self.roblox_user.id) is not None:
+                await interaction_button.followup.send(
+                    f"이미 인증된 로블록스 계정입니다. {self.roblox_user.display_name}", ephemeral=True
+                )
+                return
+            elif await roblox_auth.get_user_2_discord_id(interaction_button.user.id) is not None:
+                await interaction_button.followup.send(
+                    f"이미 인증된 디스코드 계정입니다. {interaction_button.user.display_name}", ephemeral=True
+                )
+                return
+            elif await roblox_auth.add_user(interaction_button.user, self.roblox_user.id):
+                await interaction_button.followup.send(
+                    f"인증이 완료되었습니다! {self.roblox_user.display_name} (ID: {self.roblox_user.id})\n디스코드 계정과 로블록스 계정이 연동되었습니다.", ephemeral=True
+                )
+            else:
+                await interaction_button.followup.send(
+                    "db에 정보를 기록하던중 오류가 발생하였습니다.\n잠시후 다시 시도 해주세요", ephemeral=True
+                )
 
             # 인증 메시지 삭제
             try:
