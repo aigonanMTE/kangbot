@@ -3,6 +3,10 @@ from discord import app_commands
 from discord.ext import commands
 import random
 import copy
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # 원본 문제 리스트
 context_list = {
@@ -74,7 +78,8 @@ async def send_verification_message(interaction: discord.Interaction):
 
                 if selected_option == answer:
                     await interaction_button.response.send_message("정답입니다! 🎉", ephemeral=True)
-                    role = interaction.guild.get_role(1383322911926124544)
+                    print(os.getenv("user_role_id"))
+                    role = interaction.guild.get_role(int(os.getenv("user_role_id")))
                     if role:
                         await interaction.user.add_roles(role)
                 else:
