@@ -2,13 +2,14 @@ import discord
 from commands.sql import register
 from commands.sql import review
 from commands.sql import request
+import os
 
 async def send_trade_request_command(interaction: discord.Interaction, target_user: discord.Member):
     user = interaction.user
-    if user.get_role(1383322911926124544) is None:
+    if user.get_role(int(os.getenv("user_role_id"))) is None:# 하드코딩
         await interaction.response.send_message("```ansi\n[2;31m[1;31m거래 요청을 보내려면 유저 역활이 필요합니다 /인증 명령어로 인증을 진행 해주세요[0m[2;31m[0m\n```", ephemeral=True)
         return
-    if target_user.get_role(1383322911926124544) is None:
+    if target_user.get_role(int(os.getenv("user_role_id"))) is None:# 하드코딩
         await interaction.response.send_message("```ansi\n[2;31m[1;31m상대 유저가 인증되지 않았습니다[0m[2;31m[0m\n```", ephemeral=True)
         return
     if not await register.check_registered(user):

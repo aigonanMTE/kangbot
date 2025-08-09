@@ -2,6 +2,7 @@ from commands.sql import request
 from commands.sql import register
 import discord
 import math
+import os
 
 class TradeRequestView(discord.ui.View):
     def __init__(self, requests, page=1):
@@ -55,7 +56,7 @@ def make_trade_request_embed(requests, page, max_page):
 
 async def check_trade_requset(interaction: discord.Interaction):
     user = interaction.user
-    if user.get_role(1383322911926124544) is None:
+    if user.get_role(int(os.getenv("user_role_id"))) is None:# 하드코딩
         await interaction.response.send_message(
             "```ansi\n[2;31m[1;31m거래 요청을 확인하려면 유저 역활이 필요합니다 /인증 명령어로 인증을 진행 해주세요[0m[2;31m[0m\n```",
             ephemeral=True)

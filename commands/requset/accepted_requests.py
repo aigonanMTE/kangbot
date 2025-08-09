@@ -2,6 +2,14 @@ import discord
 import datetime
 from commands.sql import request
 from commands.sql import review
+import os
+
+# 환경 변수에서 아이디 불러오기
+trade_log_channel_id = int(os.getenv("trade_log_channel_id"))
+trade_closed_category_id = int(os.getenv("trade_closed_category_id"))
+trade_category_id = int(os.getenv("trade_category_id"))
+trade_admin_role_id = int(os.getenv("trade_admin_role_id"))
+review_log_channel_id = int(os.getenv("review_log_channel_id"))  # 이 값은 env에 없으니 필요시 env에 추가
 
 async def accepted_requests_command(interaction: discord.Interaction, request_id: int):
     guild = interaction.guild
@@ -15,7 +23,6 @@ async def accepted_requests_command(interaction: discord.Interaction, request_id
     target_user = await guild.fetch_member(int(target_user_id))
 
     # 거래 카테고리 및 채널명 생성
-    trade_category_id = 1383487342664482907
     trade_category = guild.get_channel(trade_category_id)
     timestamp = datetime.datetime.now().strftime("%m%d-%H%M")
     new_channel_name = f"거래-{user.id}-{target_user.id}-{timestamp}"
@@ -73,7 +80,7 @@ class TradeEndView(discord.ui.View):
         await self.channel_to_edit.edit(overwrites=overwrites)
         await self.channel_to_edit.edit(category=self.closed_category)
         guild = self.channel_to_edit.guild
-        trade_log_channel = guild.get_channel(1383499310682869894)
+        trade_log_channel = guild.get_channel(trade_log_channel_id)
         await trade_log_channel.send(
             f"{self.member1.mention} 님과 {self.member2.mention} 님의 거래가 종료되었습니다."
         )
@@ -114,7 +121,7 @@ class TradeEndView(discord.ui.View):
                 await self.channel_to_edit.edit(overwrites=overwrites)
                 await self.channel_to_edit.edit(category=self.closed_category)
                 guild = self.channel_to_edit.guild
-                trade_log_channel = guild.get_channel(1383499310682869894)
+                trade_log_channel = guild.get_channel(trade_log_channel_id)
                 await review.add_date_problem(interaction_button.user)
                 await trade_log_channel.send(
                     f"{self.member1.mention} 님과 {self.member2.mention} 님의 거래가 미진행으로 종료되었습니다."
@@ -138,7 +145,7 @@ class TradeEndView(discord.ui.View):
                 await self.channel_to_edit.edit(overwrites=overwrites)
                 await self.channel_to_edit.edit(category=self.closed_category)
                 guild = self.channel_to_edit.guild
-                trade_log_channel = guild.get_channel(1383499310682869894)
+                trade_log_channel = guild.get_channel(trade_log_channel_id)
                 await review.add_value_problem(interaction_button.user)
                 await trade_log_channel.send(
                     f"{self.member1.mention} 님과 {self.member2.mention} 님의 거래가 미진행으로 종료되었습니다."
@@ -162,7 +169,7 @@ class TradeEndView(discord.ui.View):
                 await self.channel_to_edit.edit(overwrites=overwrites)
                 await self.channel_to_edit.edit(category=self.closed_category)
                 guild = self.channel_to_edit.guild
-                trade_log_channel = guild.get_channel(1383499310682869894)
+                trade_log_channel = guild.get_channel(trade_log_channel_id)
                 await review.add_other_problem(interaction_button.user)
                 await trade_log_channel.send(
                     f"{self.member1.mention} 님과 {self.member2.mention} 님의 거래가 미진행으로 종료되었습니다."
@@ -203,7 +210,7 @@ class TradeEndView(discord.ui.View):
                 self.interaction_user = interaction_user
                 self.channel = channel
                 guild = interaction.guild
-                review_log_channel_id = 1383496377530712288
+                # review_log_channel_id는 env에 없으니 필요시 env에 추가
                 review_log_channel = guild.get_channel(review_log_channel_id)
                 self.review_log_channel = review_log_channel
                 self.reviewed_members = reviewed_members
@@ -254,16 +261,9 @@ class TradeEndView(discord.ui.View):
 async def create_new_trade_chat(interaction: discord.Interaction, target_user: discord.Member, request_id: int):
     guild = interaction.guild
 
-    trade_admin_role_id = 1383489321411285032
     trade_admin_role = guild.get_role(trade_admin_role_id)
-
-    trade_category_id = 1383487342664482907
     trade_category = guild.get_channel(trade_category_id)
-
-    trade_closed_category_id = 1383493549831618680
     trade_closed_category = guild.get_channel(trade_closed_category_id)
-
-    trade_log_channel_id = 1383499310682869894
     trade_log_channel = guild.get_channel(trade_log_channel_id)
 
     timestamp = datetime.datetime.now().strftime("%m%d-%H%M")
