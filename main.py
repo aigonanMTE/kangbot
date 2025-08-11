@@ -3,11 +3,18 @@ from discord import app_commands
 from discord.ext import commands
 from commands.send_verification_message import send_verification_message
 import os
+from dotenv import load_dotenv, find_dotenv
+env_path = find_dotenv()
+print(f"현재 사용 중인 .env 파일 경로: {env_path}")
+# 환경 변수 로드
+load_dotenv()
 
 discord_token = os.getenv("DISCORD_TOKEN")
 print(f"Discord Token: {discord_token}")
 
 intents = discord.Intents.default()
+intents.message_content = True  # 메시지 내용 접근 허용
+intents.messages = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # 봇이 준비되었을 때 호출
@@ -19,6 +26,68 @@ async def on_ready():
         print(f"Slash commands synced: {len(synced)}개")
     except Exception as e:
         print(e)
+
+TARGET_CHANNEL_ID = int(os.getenv("TARGET_CHANNEL_ID"))  # 감시할 채널 ID를 여기에 입력하세요
+TARGET_CHANNEL_ID_2 = int(os.getenv("TARGET_CHANNEL_ID_2"))
+
+@bot.event
+async def on_message(message):
+    # 자기 자신 메시지 무시
+    if message.author == bot.user:
+        return
+
+    # 첫 번째 채널에서 메시지 감지 및 임베드 처리
+    if message.channel.id == TARGET_CHANNEL_ID:
+        last_embed_message = None
+        async for msg in message.channel.history(limit=20):
+            if (
+                msg.author == bot.user
+                and msg.embeds
+                and msg.embeds[0].title == "그거 아시나요?"
+            ):
+                last_embed_message = msg
+                break
+
+        if last_embed_message:
+            try:
+                await last_embed_message.delete()
+            except Exception:
+                pass
+
+        embed = discord.Embed(
+            title="그거 아시나요?",
+            description='# 19일 부터 서버 봇을 이용한 디스코드 계정과 로블록스 계정연동이 의무화 됩니다.\n - /로블록스_연동 명령어를 사용해 19일 전까지 연동을 완료 해주세요! 미연동시 거래채널에 메시지 보내기 및 거래채널 보기가 불가 합니다\n\n - /거래요청 명령어를 사용해 서버 자체 dm 기능을 사용해보세요!\n - 15줄 넘는 글을 보내려면 거래 포럼 채널 에서 해주세요!',
+            color=discord.Color.yellow()
+        )
+        await message.channel.send(embed=embed)
+
+    # 두 번째 채널에서 메시지 감지 및 임베드 처리
+    if message.channel.id == TARGET_CHANNEL_ID_2:
+        last_embed_message = None
+        async for msg in message.channel.history(limit=20):
+            if (
+                msg.author == bot.user
+                and msg.embeds
+                and msg.embeds[0].title == "그거 아시나요?"
+            ):
+                last_embed_message = msg
+                break
+
+        if last_embed_message:
+            try:
+                await last_embed_message.delete()
+            except Exception:
+                pass
+
+        embed = discord.Embed(
+            title="그거 아시나요?",
+            description='# 19일 부터 서버 봇을 이용한 디스코드 계정과 로블록스 계정연동이 의무화 됩니다.\n - /로블록스_연동 명령어를 사용해 19일 전까지 연동을 완료 해주세요! 미연동시 거래채널에 메시지 보내기 및 거래채널 보기가 불가 합니다\n\n - /거래요청 명령어를 사용해 서버 자체 dm 기능을 사용해보세요!\n - 15줄 넘는 글을 보내려면 거래 포럼 채널 에서 해주세요!',
+            color=discord.Color.yellow()
+        )
+        await message.channel.send(embed=embed)
+
+    # 명령어 처리
+    await bot.process_commands(message)
 
 # /테스트 커맨드 등록
 @bot.tree.command(name="테스트", description="테스트 명령어입니다.")
@@ -91,5 +160,5 @@ from commands.get_point_rank import get_point_rank
 async def get_point_rank_command(interaction: discord.Interaction, user: discord.Member):
     await get_point_rank(interaction, user)
 
-# 자신의 봇 토큰으로 교체하세요
-bot.run("MTM4NzY3OTM1OTk1OTMwMjE3NQ.GgY91M.6Ouplw0F8QFMp-Vj2GU2bIOAfA1ohFcrn8GURg")
+
+bot.run(f"{discord_token}")

@@ -4,8 +4,10 @@ import ro_py
 import aiohttp
 import random
 import asyncio
+import datetime
 from roblox import Client
 from commands.sql import roblox_auth
+import os
 
 global client
 client = Client()
@@ -64,10 +66,10 @@ async def roblox_auth_command(roblox_name: str, interaction: discord.Interaction
 
     # 유저네임 유효성 검사
     is_valid = (
-        3 <= len(roblox_name) <= 20 and                      # 길이
-        re.match(r"^[a-zA-Z][a-zA-Z0-9_]*$", roblox_name) and # 첫 글자 영어, 전체 허용 문자
-        "__" not in roblox_name and                          # 연속된 밑줄
-        not roblox_name.isdigit()                            # 숫자만으로 구성된 이름 금지
+        3 <= len(roblox_name) <= 20 and
+        re.match(r"^[a-zA-Z][a-zA-Z0-9_]*$", roblox_name) and
+        "__" not in roblox_name and
+        not roblox_name.isdigit()
     )
 
     if not is_valid:
@@ -79,7 +81,31 @@ async def roblox_auth_command(roblox_name: str, interaction: discord.Interaction
         await interaction.response.send_message("존재하지 않는 로블록스 유저네임입니다.", ephemeral=True)
         return
 
-    # 유저는 존재하긴 함
+    # 유저 객체 가져오기
+    user = await get_user_by_username_safe(roblox_name)
+    if user is None:
+        await interaction.response.send_message(f"로블록스 유저 정보를 가져오는 데 실패했습니다.", ephemeral=True)
+        return
+
+    # 30일 미만 계정 차단
+    created = getattr(user, "created", None)
+    if created is not None:
+        print(f"계정 생성일: {created}")
+        if isinstance(created, str):
+            created_dt = datetime.datetime.fromisoformat(created)
+        else:
+            created_dt = created
+        # created_dt가 aware라면 now도 aware로 맞추기
+        if created_dt.tzinfo is not None and created_dt.tzinfo.utcoffset(created_dt) is not None:
+            now = datetime.datetime.now(datetime.timezone.utc)
+        else:
+            now = datetime.datetime.utcnow()
+        if (now - created_dt).days < 30:
+            await interaction.response.send_message(
+                f"이 로블록스 계정은 생성된 지 30일이 지나지 않아 연동이 불가능합니다.\n(계정 생성일: {created_dt.date()})",
+                ephemeral=True
+            )
+            return
 
     #유저련한테 특정 꽁짜 아이템 하나 끼라하고 그거 꼴으면 프로필 설명으로 인증 할거임
     #인증 아바타 아이템 목록임
@@ -87,10 +113,6 @@ async def roblox_auth_command(roblox_name: str, interaction: discord.Interaction
     #451221329
     #376527500
     #3656493304
-    user = await get_user_by_username_safe(roblox_name)
-    if user is None:
-        await interaction.response.send_message(f"로블록스 유저 정보를 가져오는 데 실패했습니다.", ephemeral=True)
-        return
     itmes = [63690008, 451221329, 376527500, 3656493304] #인증 아이템 목록
     random_item = random.choice(itmes) #랜덤으로 아이템 하나 뽑기
 
@@ -123,11 +145,25 @@ async def roblox_auth_command(roblox_name: str, interaction: discord.Interaction
 
         @discord.ui.button(label="인증하기", style=discord.ButtonStyle.green)
         async def next_btn(self, interaction_button: discord.Interaction, button: discord.ui.Button):
+            # 인증 전 중복 체크
+            if await roblox_auth.get_user_2_roblox_id(self.roblox_user.id) is not None:
+                await interaction_button.response.send_message(
+                    f"이미 인증된 로블록스 계정입니다. {self.roblox_user.display_name}", ephemeral=True
+                )
+                return
+            elif await roblox_auth.get_user_2_discord_id(interaction_button.user.id) is not None:
+                await interaction_button.response.send_message(
+                    f"이미 인증된 디스코드 계정입니다. {interaction_button.user.display_name}", ephemeral=True
+                )
+                return
+
+            # 아이템 착용 확인
             if not await user_has_item(self.roblox_user.id, random_item):
                 await interaction_button.response.send_message("사용자가 아이템을 착용하지 않았습니다.", ephemeral=True)
                 return
             await interaction_button.response.send_message("사용자가 아이템을 착용했습니다.\n 사용자 프로필 설명을 확인중입니다...", ephemeral=True)
             
+            # 프로필 설명 확인
             if not await check_user_profile_description(self.roblox_user.id, message):
                 await interaction_button.followup.send(
                     f"사용자의 프로필 설명이 {message}와 일치하지 않습니다.\n사용자 프로필 설명을 확인해주세요", ephemeral=True
@@ -136,29 +172,24 @@ async def roblox_auth_command(roblox_name: str, interaction: discord.Interaction
             await interaction_button.followup.send(
                 f"사용자의 프로필 설명이 {message}와 일치합니다.\n인증이 완료되었습니다!\n📜db에 사용자의 정보를 기록중입니다...", ephemeral=True
             )
-            # db에 사용자 정보 기록
-            if await roblox_auth.get_user_2_roblox_id(self.roblox_user.id) is not None:
+
+            # 마지막에만 add_user 실행
+            add_user = await roblox_auth.add_user(interaction_button.user, self.roblox_user.id)
+            if add_user is not True:
                 await interaction_button.followup.send(
-                    f"이미 인증된 로블록스 계정입니다. {self.roblox_user.display_name}", ephemeral=True
-                )
-                return
-            elif await roblox_auth.get_user_2_discord_id(interaction_button.user.id) is not None:
-                await interaction_button.followup.send(
-                    f"이미 인증된 디스코드 계정입니다. {interaction_button.user.display_name}", ephemeral=True
-                )
-                return
-            elif await roblox_auth.add_user(interaction_button.user, self.roblox_user.id):
-                await interaction_button.followup.send(
-                    f"인증이 완료되었습니다! {self.roblox_user.display_name} (ID: {self.roblox_user.id})\n디스코드 계정과 로블록스 계정이 연동되었습니다.", ephemeral=True
+                    f"{add_user}\n연동이 취소 되었습니다", ephemeral=True
                 )
             else:
+                # 인증 완료 후 역할 부여
+                role = interaction_button.guild.get_role(int(os.getenv("ROBLOX_AUTH_ROLE_ID")))
+                if role:
+                        await interaction_button.user.add_roles(role)
                 await interaction_button.followup.send(
-                    "db에 정보를 기록하던중 오류가 발생하였습니다.\n잠시후 다시 시도 해주세요", ephemeral=True
+                    f"인증이 완료되었습니다! {self.roblox_user.display_name} (ID: {self.roblox_user.id})\n디스코드 계정과 로블록스 계정이 연동되었습니다.", ephemeral=True
                 )
 
             # 인증 메시지 삭제
             try:
-                # 인증 메시지가 Interaction의 followup 메시지라면
                 msg = await self.interaction.original_response()
                 await msg.delete()
             except Exception as e:

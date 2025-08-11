@@ -36,6 +36,14 @@ context_list = {
 user_answers = {}
 
 async def send_verification_message(interaction: discord.Interaction):
+    # 이미 역할이 있는지 확인
+    role_id = os.getenv("user_role_id")
+    if role_id is not None:
+        role = interaction.guild.get_role(int(role_id))
+        if role and role in interaction.user.roles:
+            await interaction.response.send_message("이미 인증된 유저입니다.", ephemeral=True)
+            return
+
     problem_id = random.randint(1, 19)
     original = context_list[problem_id]
     correct_answer = ' '.join(original)
@@ -55,7 +63,6 @@ async def send_verification_message(interaction: discord.Interaction):
 
     # 유저의 정답 저장
     user_answers[interaction.user.id] = correct_answer
-    # print(f"User {interaction.user.id} answer: {correct_answer}")
 
     class VerificationView(discord.ui.View):
         def __init__(self, timeout=30):
@@ -67,7 +74,6 @@ async def send_verification_message(interaction: discord.Interaction):
 
     view = VerificationView()
 
-    # 콜백을 외부 함수로 분리 (중복 문제 해결)
     def make_option_callback(selected_option):
         async def option_callback(interaction_button: discord.Interaction):
             try:
@@ -78,7 +84,6 @@ async def send_verification_message(interaction: discord.Interaction):
 
                 if selected_option == answer:
                     await interaction_button.response.send_message("정답입니다! 🎉", ephemeral=True)
-                    print(os.getenv("user_role_id"))
                     role = interaction.guild.get_role(int(os.getenv("user_role_id")))
                     if role:
                         await interaction.user.add_roles(role)
