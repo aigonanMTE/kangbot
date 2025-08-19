@@ -12,6 +12,8 @@ load_dotenv()
 discord_token = os.getenv("DISCORD_TOKEN")
 print(f"Discord Token: {discord_token}")
 
+TRADE_CHANNEL_MESSAGE = os.getenv("TRADE_CHANNEL_MESSAGE", "거래 채널 메시지가 설정되지 않았습니다.")
+
 intents = discord.Intents.default()
 intents.message_content = True  # 메시지 내용 접근 허용
 intents.messages = True
@@ -56,7 +58,7 @@ async def on_message(message):
 
         embed = discord.Embed(
             title="그거 아시나요?",
-            description='# 19일 부터 서버 봇을 이용한 디스코드 계정과 로블록스 계정연동이 의무화 됩니다.\n - /로블록스_연동 명령어를 사용해 19일 전까지 연동을 완료 해주세요! 미연동시 거래채널에 메시지 보내기 및 거래채널 보기가 불가 합니다\n\n - /거래요청 명령어를 사용해 서버 자체 dm 기능을 사용해보세요!\n - 15줄 넘는 글을 보내려면 거래 포럼 채널 에서 해주세요!',
+            description=TRADE_CHANNEL_MESSAGE,
             color=discord.Color.yellow()
         )
         await message.channel.send(embed=embed)
@@ -81,7 +83,7 @@ async def on_message(message):
 
         embed = discord.Embed(
             title="그거 아시나요?",
-            description='# 19일 부터 서버 봇을 이용한 디스코드 계정과 로블록스 계정연동이 의무화 됩니다.\n - /로블록스_연동 명령어를 사용해 19일 전까지 연동을 완료 해주세요! 미연동시 거래채널에 메시지 보내기 및 거래채널 보기가 불가 합니다\n\n - /거래요청 명령어를 사용해 서버 자체 dm 기능을 사용해보세요!\n - 15줄 넘는 글을 보내려면 거래 포럼 채널 에서 해주세요!',
+            description=TRADE_CHANNEL_MESSAGE,
             color=discord.Color.yellow()
         )
         await message.channel.send(embed=embed)
